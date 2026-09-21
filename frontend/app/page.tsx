@@ -2,8 +2,8 @@ import ChatWidget from "./components/ChatWidget";
 
 export default function Home() {
   return (
-    <main className="bg-transparent min-h-screen">
-      {/* Floating AI Chatbot Widget Only */}
+    <main style={{ backgroundColor: 'transparent' }} className="min-h-screen">
+      {/* Floating AI Chatbot Widget */}
       <ChatWidget />
     </main>
   );
