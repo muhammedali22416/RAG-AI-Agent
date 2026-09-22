@@ -56,7 +56,7 @@ export default function ChatWidget() {
   const getTime = () =>
     new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  const sendToAgent = async (messageText: string) => {
+    const sendToAgent = async (messageText: string) => {
     const userMsg: Message = {
       role: "user",
       content: messageText,
@@ -75,17 +75,26 @@ export default function ChatWidget() {
       if (!res.ok) throw new Error("Server error");
 
       const data = await res.json();
-setMessages((prev) => [
-  ...prev,
-  { role: "assistant", content: data.reply, timestamp: getTime(), products: data.products },
-]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data.reply,
+          timestamp: getTime(),
+          products: data.products,
+        },
+      ]);
 
-if (data.cart_action?.wc_id) {
-  window.open(
-    `https://teststore.kllakar.pk/?add-to-cart=${data.cart_action.wc_id}&quantity=${data.cart_action.quantity}`,
-    "_top"
-  );
-}
+      if (data.cart_action?.wc_id) {
+        window.parent.postMessage(
+          {
+            type: "add-to-cart",
+            wc_id: data.cart_action.wc_id,
+            quantity: data.cart_action.quantity || 1,
+          },
+          "*",
+        );
+      }
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -110,9 +119,9 @@ if (data.cart_action?.wc_id) {
 
   const handleAddToCart = (product: Product) => {
     if (product.wc_id) {
-      window.open(
-        `https://teststore.kllakar.pk/?add-to-cart=${product.wc_id}`,
-        "_top",
+      window.parent.postMessage(
+        { type: "add-to-cart", wc_id: product.wc_id, quantity: 1 },
+        "*",
       );
     }
   };
