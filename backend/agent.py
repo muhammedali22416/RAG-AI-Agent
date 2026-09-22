@@ -5,6 +5,11 @@ from langchain_groq import ChatGroq
 from langchain_core.tools import tool
 from tools import search_products, get_store_policy, add_to_cart, get_categories
 from collections import defaultdict
+from database import supabase
+
+def supabase_get_wc_id(product_id: str):
+    result = supabase.table("products").select("wc_id").eq("id", product_id).execute()
+    return result.data[0] if result.data else None
 
 session_store = defaultdict(list)
 
@@ -75,6 +80,7 @@ def run_agent(user_message: str, user_id: str = "guest"):
     messages.append({"role": "user", "content": user_message})
 
     last_products = []
+    cart_action = None
 
     max_iterations = 5
     for _ in range(max_iterations):
@@ -85,13 +91,17 @@ def run_agent(user_message: str, user_id: str = "guest"):
             history.append({"role": "user", "content": user_message})
             history.append({"role": "assistant", "content": ai_msg.content})
             session_store[user_id] = history[-20:]
-            return {"reply": ai_msg.content, "products": last_products}
+            return {"reply": ai_msg.content, "products": last_products, "cart_action": cart_action}
 
         for call in ai_msg.tool_calls:
             args = call["args"]
             if call["name"] == "add_to_cart_tool":
                 try:
                     result = add_to_cart(user_id, args["product_id"], args.get("quantity", 1))
+                    if isinstance(result, list) and result:
+                        product = supabase_get_wc_id(args["product_id"])
+                        if product:
+                            cart_action = {"wc_id": product["wc_id"], "quantity": args.get("quantity", 1)}
                 except Exception as e:
                     result = f"Error: {str(e)}"
             else:
@@ -108,4 +118,4 @@ def run_agent(user_message: str, user_id: str = "guest"):
                 "tool_call_id": call["id"]
             })
 
-    return {"reply": "Sorry, thoda issue ho gaya. Dobara try karein.", "products": []}
+    return {"reply": "Sorry, thoda issue ho gaya. Dobara try karein.", "products": [], "cart_action": None}

@@ -16,6 +16,7 @@ type Message = {
   content: string;
   timestamp?: string;
   products?: Product[];
+  cart_action?: { wc_id: number; quantity: number } | null;
 };
 
 export default function ChatWidget() {
@@ -74,15 +75,17 @@ export default function ChatWidget() {
       if (!res.ok) throw new Error("Server error");
 
       const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.reply,
-          timestamp: getTime(),
-          products: data.products,
-        },
-      ]);
+setMessages((prev) => [
+  ...prev,
+  { role: "assistant", content: data.reply, timestamp: getTime(), products: data.products },
+]);
+
+if (data.cart_action?.wc_id) {
+  window.open(
+    `https://teststore.kllakar.pk/?add-to-cart=${data.cart_action.wc_id}&quantity=${data.cart_action.quantity}`,
+    "_top"
+  );
+}
     } catch (err) {
       setMessages((prev) => [
         ...prev,
