@@ -8,6 +8,7 @@ type Product = {
   price: number;
   image_url: string | null;
   category?: string;
+  wc_id?: number;
 };
 
 type Message = {
@@ -22,8 +23,12 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "👋 Hey there! Looking for something specific today? Tell me your budget or requirements!",
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      content:
+        "👋 Hey there! Looking for something specific today? Tell me your budget or requirements!",
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     },
   ]);
   const [input, setInput] = useState("");
@@ -47,10 +52,15 @@ export default function ChatWidget() {
     }
   }, [messages, isOpen, loading]);
 
-  const getTime = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const getTime = () =>
+    new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   const sendToAgent = async (messageText: string) => {
-    const userMsg: Message = { role: "user", content: messageText, timestamp: getTime() };
+    const userMsg: Message = {
+      role: "user",
+      content: messageText,
+      timestamp: getTime(),
+    };
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
@@ -66,14 +76,20 @@ export default function ChatWidget() {
       const data = await res.json();
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.reply, timestamp: getTime(), products: data.products },
+        {
+          role: "assistant",
+          content: data.reply,
+          timestamp: getTime(),
+          products: data.products,
+        },
       ]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "⚠️ Unable to connect to the assistant server. Please check backend status.",
+          content:
+            "⚠️ Unable to connect to the assistant server. Please check backend status.",
           timestamp: getTime(),
         },
       ]);
@@ -90,7 +106,12 @@ export default function ChatWidget() {
   };
 
   const handleAddToCart = (product: Product) => {
-    sendToAgent(`add ${product.name} to my cart`);
+    if (product.wc_id) {
+      window.open(
+        `https://teststore.kllakar.pk/?add-to-cart=${product.wc_id}`,
+        "_top",
+      );
+    }
   };
 
   return (
@@ -125,7 +146,12 @@ export default function ChatWidget() {
           <div className="flex items-center justify-between border-b border-slate-800/60 bg-slate-900/90 px-4 py-3 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#6316FF] to-[#EA16B3] text-white shadow-md">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -136,8 +162,12 @@ export default function ChatWidget() {
                 <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-950"></span>
               </div>
               <div>
-                <h3 className="font-semibold text-slate-100 text-sm leading-tight">TechStore Agent</h3>
-                <p className="text-[10px] text-slate-400 tracking-wide">RAG Powered Assistant</p>
+                <h3 className="font-semibold text-slate-100 text-sm leading-tight">
+                  TechStore Agent
+                </h3>
+                <p className="text-[10px] text-slate-400 tracking-wide">
+                  RAG Powered Assistant
+                </p>
               </div>
             </div>
 
@@ -145,8 +175,18 @@ export default function ChatWidget() {
               onClick={() => toggleWidgetState(false)}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -154,7 +194,10 @@ export default function ChatWidget() {
           {/* Messages Feed */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin scrollbar-thumb-slate-800">
             {messages.map((m, i) => (
-              <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+              <div
+                key={i}
+                className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
+              >
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed shadow-sm transition-all ${
                     m.role === "user"
@@ -164,7 +207,11 @@ export default function ChatWidget() {
                 >
                   <p className="whitespace-pre-wrap">{m.content}</p>
                 </div>
-                {m.timestamp && <span className="mt-1 px-1 text-[9.5px] text-slate-500">{m.timestamp}</span>}
+                {m.timestamp && (
+                  <span className="mt-1 px-1 text-[9.5px] text-slate-500">
+                    {m.timestamp}
+                  </span>
+                )}
 
                 {/* Product Recommendations Horizontal List */}
                 {m.products && m.products.length > 0 && (
@@ -176,9 +223,15 @@ export default function ChatWidget() {
                       >
                         <div className="h-24 w-full overflow-hidden rounded-lg bg-slate-800/80 flex items-center justify-center">
                           {p.image_url ? (
-                            <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
+                            <img
+                              src={p.image_url}
+                              alt={p.name}
+                              className="h-full w-full object-cover"
+                            />
                           ) : (
-                            <span className="text-slate-500 text-[10px]">No Image</span>
+                            <span className="text-slate-500 text-[10px]">
+                              No Image
+                            </span>
                           )}
                         </div>
                         <p className="mt-2 text-[11px] font-medium leading-snug text-slate-200 line-clamp-2">
@@ -208,7 +261,9 @@ export default function ChatWidget() {
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-500 [animation-delay:-0.15s]"></span>
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-pink-500"></span>
                 </div>
-                <span className="text-[11.5px] text-slate-400">Searching store...</span>
+                <span className="text-[11.5px] text-slate-400">
+                  Searching store...
+                </span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -229,8 +284,18 @@ export default function ChatWidget() {
                 disabled={!input.trim() || loading}
                 className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-r from-[#6316FF] to-[#EA16B3] text-white transition-opacity hover:opacity-90 disabled:opacity-40"
               >
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9-7-9-7-9 7 9 7zm0 0v-8" />
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 19l9-7-9-7-9 7 9 7zm0 0v-8"
+                  />
                 </svg>
               </button>
             </div>

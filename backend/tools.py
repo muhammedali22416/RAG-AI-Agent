@@ -3,7 +3,7 @@ from database import supabase
 from embeddings import get_embedding
 
 def search_products(query: str, max_price: Optional[float] = None):
-    base_cols = "id, name, category, price, stock, description, image_url"
+    base_cols = "id, name, category, price, stock, description, image_url, wc_id"
 
     def apply_price(q):
         return q.lte("price", max_price) if max_price else q
